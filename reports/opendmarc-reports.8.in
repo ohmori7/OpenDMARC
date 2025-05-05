@@ -22,6 +22,9 @@ Generate reports on day boundaries.  Overrides the value of
 .I --interval
 (see below).
 .TP
+.I --dbscheme=scheme
+Specify "msyql" (the default) or "MariaDB".
+.TP
 .I --dbhost=hostname
 Specifies the hostname on which the SQL server is running.  Defaults to
 the value of the environment variable OPENDMARC_DBHOST, or "localhost" if

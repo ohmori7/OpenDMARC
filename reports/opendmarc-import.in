@@ -20,8 +20,6 @@ use Getopt::Long;
 use POSIX;
 use JSON;
 
-require DBD::@SQL_BACKEND@;
-
 # general
 my $progname      = basename($0);
 my $version       = "@VERSION@";
@@ -30,6 +28,7 @@ my $helponly      = 0;
 my $showversion   = 0;
 
 # DB parameters
+my $def_dbscheme  = "@SQL_BACKEND@";
 my $def_dbhost    = "localhost";
 my $def_dbname    = "opendmarc";
 my $def_dbuser    = "opendmarc";
@@ -45,7 +44,7 @@ my $dbport;
 my $inputfile;
 my $inputfh;
 
-my $dbscheme     = "@SQL_BACKEND@";
+my $dbscheme     = $def_dbscheme;
 
 my $dbi_a;
 my $dbi_h;
@@ -291,7 +290,7 @@ sub update_db
 	}
 
 	$dbi_s = $dbi_h->prepare("INSERT INTO signatures (message, domain, selector, pass, error) VALUES(?, ?, ?, ?, ?)");
-	foreach my $dd (0 .. $#dkim_data)
+	foreach my $dd (0 .. @dkim_data-1)
 	{
 		my $sdomain;
 		my $sdomain_id;
@@ -323,7 +322,7 @@ sub update_db
 	$dbi_s->finish;
 
 	$dbi_s = $dbi_h->prepare("INSERT INTO arcauthresults (message, instance, arc_client_addr) VALUES(?, ?, ?)");
-	foreach my $aar (0 .. $#arc_policy_data)
+	foreach my $aar (0 .. @arc_policy_data-1)
 	{
 		my $instance;
 		my $arc_client_addr;
@@ -341,7 +340,7 @@ sub update_db
 	$dbi_s->finish;
 
 	$dbi_s = $dbi_h->prepare("INSERT INTO arcseals (message, domain, selector, instance) VALUES(?, ?, ?, ?)");
-	foreach my $as (0 .. $#arc_policy_data)
+	foreach my $as (0 .. @arc_policy_data-1)
 	{
 		my $sdomain;
 		my $sdomain_id;
@@ -416,6 +415,7 @@ sub update_db
 sub usage
 {
 	print STDERR "$progname: usage: $progname [options]\n";
+	print STDERR "\t--dbscheme=scheme  mysql or MariaDB [$def_dbscheme]\n";
 	print STDERR "\t--dbhost=host      database host [$def_dbhost]\n";
 	print STDERR "\t--dbname=name      database name [$def_dbname]\n";
 	print STDERR "\t--dbpasswd=passwd  database password [$def_dbpasswd]\n";
@@ -428,7 +428,8 @@ sub usage
 }
 
 # parse command line arguments
-my $opt_retval = &Getopt::Long::GetOptions ('dbhost=s' => \$dbhost,
+my $opt_retval = &Getopt::Long::GetOptions ('dbscheme=s' => \$dbscheme,
+                                            'dbhost=s' => \$dbhost,
                                             'dbname=s' => \$dbname,
                                             'dbpasswd=s' => \$dbpasswd,
                                             'dbport=s' => \$dbport,
@@ -543,8 +544,13 @@ if (!flock($inputfh, LOCK_SH))
 	print STDERR "$progname: warning: unable to establish read lock\n";
 }
 
+require "DBD/$dbscheme.pm";
+
 my $dbi_dsn = "DBI:" . $dbscheme . ":database=" . $dbname .
-              ";host=" . $dbhost . ";port=" . $dbport;
+    ";host=" . $dbhost;
+if ($dbport != $def_dbport) {
+    $dbi_dsn .= ";port=" . $dbport;
+}
 
 $dbi_h = DBI->connect($dbi_dsn, $dbuser, $dbpasswd, { PrintError => 0 });
 if (!defined($dbi_h))
