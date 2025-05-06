@@ -120,7 +120,7 @@ my $dbi_a;
 my $dbi_hash;
 
 # DB parameters
-my $def_dbscheme  = $def_dbscheme;
+my $def_dbscheme  = "@SQL_BACKEND@";
 my $def_dbhost    = "localhost";
 my $def_dbname    = "opendmarc";
 my $def_dbuser    = "opendmarc";
