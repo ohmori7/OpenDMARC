@@ -103,12 +103,10 @@
 # define _PATH_SENDMAIL	"/usr/sbin/sendmail"
 #endif /* ! _PATH_SENDMAIL */
 
+#define	FREE(x)		do { free(x); (x) = NULL; } while(0)
 #define	TRYFREE(x)	do { \
 				if ((x) != NULL) \
-				{ \
-					free(x); \
-					(x) = NULL; \
-				} \
+					FREE(x); \
 			} while (0)
 
 /* data types */
@@ -2575,8 +2573,7 @@ mlfi_eom(SMFICTX *ctx)
 		/* parse it */
 		if (opendmarc_arcares_parse(hdr->hdr_value, &aar_hdr_new->arcares) != 0)
 		{
-			free(aar_hdr_new);
-			aar_hdr_new = NULL;
+			FREE(aar_hdr_new);
 			syslog(LOG_WARNING,
 			       "%s: ignoring invalid %s header \"%s\"",
 			       dfc->mctx_jobid, hdr->hdr_name, hdr->hdr_value);
@@ -2624,8 +2621,7 @@ mlfi_eom(SMFICTX *ctx)
 		/* parse it */
 		if (opendmarc_arcseal_parse(hdr->hdr_value, &as_hdr_new->arcseal) != 0)
 		{
-			free(as_hdr_new);
-			as_hdr_new = NULL;
+			FREE(as_hdr_new);
 			continue;
 		}
 
