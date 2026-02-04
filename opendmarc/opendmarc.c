@@ -2963,6 +2963,9 @@ mlfi_eom(SMFICTX *ctx)
 						     pc++)
 						{
 							arcdomain = (u_char *)strdup(dfc->mctx_arcchain[pc]);
+							/* XXX: avoid assertion failure for now... */
+							if (arcdomain == NULL)
+								continue;
 							dmarcf_lowercase(arcdomain);
 
 							entry.key = arcdomain;
