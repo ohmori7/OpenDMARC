@@ -43,7 +43,11 @@ fi
 
 autoreconf -v -i
 
-CONF="./configure -q --with-wall -C --with-spf"
+#CONF="./configure -q --with-wall -C --with-spf"
+# XXX: i don't no --with-wall option, and the intention of original code.
+#      please run this script as follows:
+#		env CFLAGS="-Wall" ./AutoBuild.sh"
+CONF="./configure -q -C --with-spf"
 echo ${CONF}
 perform "$CONF"
 perform "make -s"
