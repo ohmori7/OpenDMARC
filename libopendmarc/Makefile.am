@@ -1,5 +1,6 @@
 SUBDIRS=tests docs
 AM_CPPFLAGS = -I. -I..
+AM_CFLAGS = @CFLAGS@ -Wall -Wno-unused-but-set-variable -Werror
 LDADD = ./libopendmarc.la
 lib_LTLIBRARIES = libopendmarc.la
 libopendmarc_la_SOURCES	= dmarc.h \

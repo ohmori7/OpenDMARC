@@ -43,10 +43,8 @@ fi
 
 autoreconf -v -i
 
-#CONF="./configure -q --with-wall -C --with-spf"
-# XXX: i don't no --with-wall option, and the intention of original code.
-#      please run this script as follows:
-#		env CFLAGS="-Wall -Wno-unused-but-set-variable" ./AutoBuild.sh
+# XXX:i don't know --with-wall option, and the intention of original code.
+#	now, -Wall is passed to compiler in Makefile.am.
 CONF="./configure -q -C --with-spf"
 echo ${CONF}
 perform "$CONF"
