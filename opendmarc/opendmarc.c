@@ -1971,7 +1971,6 @@ sfsistat
 mlfi_connect(SMFICTX *ctx, char *host, _SOCK_ADDR *ip)
 {
 	DMARCF_CONNCTX cc;
-	struct dmarcf_config *conf;
 
 	dmarcf_config_reload();
 
@@ -2010,15 +2009,9 @@ mlfi_connect(SMFICTX *ctx, char *host, _SOCK_ADDR *ip)
 		cc->cctx_config = curconf;
 		curconf->conf_refcnt++;
 
-		conf = curconf;
-
 		pthread_mutex_unlock(&conf_lock);
 
 		dmarcf_setpriv(ctx, cc);
-	}
-	else
-	{
-		conf = cc->cctx_config;
 	}
 
 	if (host != NULL)
