@@ -1107,7 +1107,7 @@ dmarcf_checkip(_SOCK_ADDR *ip, struct list *list)
 		dst_len = sizeof ipbuf - 1;
 
 		inet_ntop(AF_INET6, &addr, dst, dst_len);
-		dmarcf_lowercase((u_char *) dst);
+		dmarcf_lowercase(dst);
 
 		if (dmarcf_checklist(ipbuf, list))
 			return FALSE;
@@ -1128,7 +1128,7 @@ dmarcf_checkip(_SOCK_ADDR *ip, struct list *list)
 			dst_len = sizeof ipbuf - 1;
 
 			inet_ntop(AF_INET6, &addr, dst, dst_len);
-			dmarcf_lowercase((u_char *) dst);
+			dmarcf_lowercase(dst);
 
 			sz = strlcat(ipbuf, "/", sizeof ipbuf);
 			if (sz >= sizeof ipbuf)

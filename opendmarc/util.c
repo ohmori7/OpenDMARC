@@ -243,13 +243,13 @@ dmarcf_socket_cleanup(char *sockspec)
 */
 
 void
-dmarcf_lowercase(u_char *str)
+dmarcf_lowercase(char *str)
 {
 	u_char *p;
 
 	assert(str != NULL);
 
-	for (p = str; *p != '\0'; p++)
+	for (p = (u_char *)str; *p != '\0'; p++)
 	{
 		if (isascii(*p) && isupper(*p))
 			*p = tolower(*p);
