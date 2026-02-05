@@ -135,9 +135,9 @@ opendmarc_arcseal_strip_whitespace(char *string)
 int
 opendmarc_arcseal_parse(u_char *hdr, struct arcseal *as)
 {
-	u_char *tmp_ptr;
-	u_char *token;
-	u_char tmp[OPENDMARC_ARCSEAL_MAXHEADER_LEN + 1];
+	char *tmp_ptr;
+	char *token;
+	char tmp[OPENDMARC_ARCSEAL_MAXHEADER_LEN + 1];
 	int result = 0;
 
 	tmp_ptr = tmp;
@@ -149,7 +149,7 @@ opendmarc_arcseal_parse(u_char *hdr, struct arcseal *as)
 	memset(tmp, '\0', sizeof tmp);
 
 	// guarantee a null-terminated string
-	memcpy(tmp, hdr, MIN_OF(strlen(hdr), sizeof tmp - 1));
+	memcpy(tmp, hdr, MIN_OF(strlen((char *)hdr), sizeof tmp - 1));
 
 	while ((token = strsep((char **)&tmp_ptr, ";")) != NULL)
 	{
@@ -171,11 +171,11 @@ opendmarc_arcseal_parse(u_char *hdr, struct arcseal *as)
 		switch (tag_code)
 		{
 		  case AS_TAG_ALGORITHM:
-			strlcpy(as->algorithm, tag_value, sizeof as->algorithm);
+			strlcpy((char *)as->algorithm, tag_value, sizeof as->algorithm);
 				break;
 
 		  case AS_TAG_CHAIN_VALIDATION:
-			strlcpy(as->chain_validation, tag_value, sizeof as->chain_validation);
+			strlcpy((char *)as->chain_validation, tag_value, sizeof as->chain_validation);
 			break;
 
 		  case AS_TAG_INSTANCE:
@@ -183,19 +183,19 @@ opendmarc_arcseal_parse(u_char *hdr, struct arcseal *as)
 			break;
 
 		  case AS_TAG_SIGNATURE_DOMAIN:
-			strlcpy(as->signature_domain, tag_value, sizeof as->signature_domain);
+			strlcpy((char *)as->signature_domain, tag_value, sizeof as->signature_domain);
 			break;
 
 		  case AS_TAG_SIGNATURE_SELECTOR:
-			strlcpy(as->signature_selector, tag_value, sizeof as->signature_selector);
+			strlcpy((char *)as->signature_selector, tag_value, sizeof as->signature_selector);
 			break;
 
 		  case AS_TAG_SIGNATURE_TIME:
-			strlcpy(as->signature_time, tag_value, sizeof as->signature_time);
+			strlcpy((char *)as->signature_time, tag_value, sizeof as->signature_time);
 			break;
 
 		  case AS_TAG_SIGNATURE_VALUE:
-			strlcpy(as->signature_value, tag_value, sizeof as->signature_value);
+			strlcpy((char *)as->signature_value, tag_value, sizeof as->signature_value);
 			break;
 
 		  default:

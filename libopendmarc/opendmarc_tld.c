@@ -27,10 +27,10 @@ static OPENDMARC_HASH_CTX *TLDbak_hctx = NULL;
 static char TLDfile[MAXPATHLEN];
 
 int
-opendmarc_reverse_domain(u_char *domain, u_char *buf, size_t buflen)
+opendmarc_reverse_domain(char *domain, char *buf, size_t buflen)
 {
-	u_char *dp, *ep, *cp;
-	u_char  copy[MAXDNSHOSTNAME];
+	char *dp, *ep, *cp;
+	char  copy[MAXDNSHOSTNAME];
 
 	if (buf == NULL || buflen == 0 || domain == NULL)
 	{
@@ -38,7 +38,7 @@ opendmarc_reverse_domain(u_char *domain, u_char *buf, size_t buflen)
 	}
 
 
-	(void) memset((char *)buf, '\0', buflen);
+	(void) memset(buf, '\0', buflen);
 	/*
 	 * Strip all but one leading dot.
 	 */
@@ -53,9 +53,9 @@ opendmarc_reverse_domain(u_char *domain, u_char *buf, size_t buflen)
 	}
 	if (cp > domain)
 		--cp;
-	(void) memset((char *)copy, '\0', sizeof copy);
-	(void) strlcpy((char *)copy, cp, sizeof copy);
-	ep = copy + strlen((char *)copy);
+	(void) memset(copy, '\0', sizeof copy);
+	(void) strlcpy(copy, cp, sizeof copy);
+	ep = copy + strlen(copy);
 
 	/*
 	 * Strip all trailing dots.
@@ -77,10 +77,10 @@ opendmarc_reverse_domain(u_char *domain, u_char *buf, size_t buflen)
 		if (*dp == '.')
 			++dp;
 
-		strlcat((char *)buf, (char *)dp, buflen);
+		strlcat(buf, dp, buflen);
 		if (*ep == '.')
 		{
-			(void) strlcat((char *)buf, ".", buflen);
+			(void) strlcat(buf, ".", buflen);
 			*ep = '\0';
 			--ep;
 		}
@@ -108,11 +108,11 @@ int
 opendmarc_tld_read_file(char *path_fname, char *commentstring, char *drop, char *except)
 {
 	FILE *	fp;
-	u_char 	buf[BUFSIZ];
+	char 	buf[BUFSIZ];
 	char *	cp;
 	int	nlines=0;
 	int	ret;
-	u_char	revbuf[MAXDNSHOSTNAME];
+	char	revbuf[MAXDNSHOSTNAME];
 	int	adddot;
 	int	preflen;
 	OPENDMARC_HASH_CTX *hashp;
@@ -138,29 +138,29 @@ opendmarc_tld_read_file(char *path_fname, char *commentstring, char *drop, char 
 		return errno;
 
 	errno = 0;
-	while (fgets((char *)buf, sizeof buf, fp) != NULL)
+	while (fgets(buf, sizeof buf, fp) != NULL)
 	{
 
-		cp = strchr((char *)buf, '\n');
+		cp = strchr(buf, '\n');
 		if (cp != NULL)
 			*cp = '\0';
-		cp = strchr((char *)buf, '\r');
+		cp = strchr(buf, '\r');
 		if (cp != NULL)
 			*cp = '\0';
 
-		if (strncmp(commentstring, (char *)buf, strlen(commentstring)) == 0 || *buf == '\0')
+		if (strncmp(commentstring, buf, strlen(commentstring)) == 0 || *buf == '\0')
 		{
-			if ((cp = strstr((char *)buf, "xn-")) != NULL)
+			if ((cp = strstr(buf, "xn-")) != NULL)
 			{
 				char *ep;
 
 				for (ep = cp; *ep != '\0';  ++ep)
 				{
-					if (isspace((int)*ep))
+					if (isspace((u_char)*ep))
 						break;
 				}
 				*ep = '\0';
-				ret = opendmarc_reverse_domain((u_char *)cp, revbuf, sizeof revbuf);
+				ret = opendmarc_reverse_domain(cp, revbuf, sizeof revbuf);
 				adddot = TRUE;
 				goto got_xn;
 			}
@@ -168,12 +168,12 @@ opendmarc_tld_read_file(char *path_fname, char *commentstring, char *drop, char 
 		}
 		adddot  = TRUE;
 		preflen = 0;
-		if (drop != NULL && strncasecmp(drop, (char *)buf, strlen(drop)) == 0)
+		if (drop != NULL && strncasecmp(drop, buf, strlen(drop)) == 0)
 		{
 			preflen = strlen(drop);
 			adddot = TRUE;
 		}
-		if (except != NULL && strncasecmp(except, (char *)buf, strlen(except)) == 0)
+		if (except != NULL && strncasecmp(except, buf, strlen(except)) == 0)
 		{
 			preflen = strlen(except);
 			adddot = FALSE;
@@ -183,7 +183,7 @@ got_xn:
 		if (ret != 0)
 			continue;
 		if (adddot == TRUE)
-			(void) strlcat((char *)revbuf, ".", sizeof revbuf);
+			(void) strlcat(revbuf, ".", sizeof revbuf);
 
 		if (opendmarc_hash_lookup(hashp, revbuf, (void *)revbuf, strlen(revbuf)) == NULL)
 			return 1;
@@ -232,12 +232,12 @@ opendmarc_tld_shutdown()
 }
 
 int
-opendmarc_get_tld(u_char *domain, u_char *tld, size_t tld_len)
+opendmarc_get_tld(char *domain, char *tld, size_t tld_len)
 {
 	int	ret;
-	u_char	revbuf[MAXDNSHOSTNAME];
-	u_char *rp;
-	u_char  save;
+	char	revbuf[MAXDNSHOSTNAME];
+	char *rp;
+	char  save;
 	void *	vp;
 	
 	if (domain == NULL || tld == NULL || tld_len == 0)

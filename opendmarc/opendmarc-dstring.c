@@ -235,14 +235,14 @@ dmarcf_dstring_copy(struct dmarcf_dstring *dstr, u_char *str)
 */
 
 _Bool
-dmarcf_dstring_cat(struct dmarcf_dstring *dstr, u_char *str)
+dmarcf_dstring_cat(struct dmarcf_dstring *dstr, const char *str)
 {
 	int len;
 
 	assert(dstr != NULL);
 	assert(str != NULL);
 
-	len = strlen((char *) str) + dstr->ds_len;
+	len = strlen(str) + dstr->ds_len;
 
 	/* too big? */
 	if (dstr->ds_max > 0 && len >= dstr->ds_max)
@@ -257,7 +257,7 @@ dmarcf_dstring_cat(struct dmarcf_dstring *dstr, u_char *str)
 	}
 
 	/* append */
-	dstr->ds_len = strlcat((char *) dstr->ds_buf, (char *) str,
+	dstr->ds_len = strlcat((char *) dstr->ds_buf, str,
 	                       dstr->ds_alloc);
 
 	return TRUE;

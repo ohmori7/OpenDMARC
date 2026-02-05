@@ -29,12 +29,12 @@
 **	Side Effects:
 **		Allocates and reallocates memory.
 */
-u_char **
-opendmarc_util_clearargv(u_char **ary)
+char **
+opendmarc_util_clearargv(char **ary)
 {
 	if (ary != NULL)
 	{
-		u_char **arp;
+		char **arp;
 
 		for (arp = ary; *arp != NULL; ++arp)
 		{
@@ -60,11 +60,11 @@ opendmarc_util_clearargv(u_char **ary)
 **	Side Effects:
 **		Allocates and reallocates memory.
 */
-u_char **
-opendmarc_util_pushargv(u_char *str, u_char **ary, int *cnt)
+char **
+opendmarc_util_pushargv(char *str, char **ary, int *cnt)
 {
 	int   	 i;
-	u_char **tmp;
+	char **tmp;
 
 	if (str == NULL)
 		return ary;
@@ -122,20 +122,20 @@ opendmarc_util_pushargv(u_char *str, u_char **ary, int *cnt)
 **	Parameters:
 **		ary	-- Pointer to array to dupe
 **	Returns:
-**		u_char **	-- On success
-**		NULL		-- on error
+**		char **	-- On success
+**		NULL	-- on error
 **	Side Effects:
 **		Allocates and reallocates memory.
 */
-u_char **
-opendmarc_util_dupe_argv(u_char **ary)
+char **
+opendmarc_util_dupe_argv(char **ary)
 {
-	u_char **new = NULL;
+	char **new = NULL;
 	int      new_cnt = 0;
 
 	if (ary != NULL)
 	{
-		u_char **arp;
+		char **arp;
 
 		for (arp = ary; *arp != NULL; ++arp)
 			new = opendmarc_util_pushargv(*arp, new, &new_cnt);
@@ -155,12 +155,12 @@ opendmarc_util_dupe_argv(u_char **ary)
 **		NULL on error and sets errno.
 **	Side Effects:
 */
-u_char *
-opendmarc_util_cleanup(u_char *str, u_char *buf, size_t buflen)
+char *
+opendmarc_util_cleanup(char *str, char *buf, size_t buflen)
 {
 	char *sp, *ep;
 
-	if (str == NULL || buf == NULL || strlen((char *)str) > buflen)
+	if (str == NULL || buf == NULL || strlen(str) > buflen)
 	{
 		errno = EINVAL;
 		return NULL;
@@ -170,7 +170,7 @@ opendmarc_util_cleanup(u_char *str, u_char *buf, size_t buflen)
 
 	for (sp = str, ep = buf; *sp != '\0'; sp++)
 	{
-		if (!isascii(*sp) || !isspace(*sp))
+		if (!isascii((u_char)*sp) || !isspace((u_char)*sp))
 			*ep++ = *sp;
 	}
 
@@ -192,14 +192,14 @@ opendmarc_util_cleanup(u_char *str, u_char *buf, size_t buflen)
 **	        "foo" <a@a.com> "foo" --> a.com
 **		a@a.com, b@b.com, c@c.com --> a.com
 */
-u_char *
-opendmarc_util_finddomain(u_char *raw, u_char *buf, size_t buflen)
+char *
+opendmarc_util_finddomain(char *raw, char *buf, size_t buflen)
 {
-	u_char *a     	= NULL;
-	u_char *b     	= NULL;
-	u_char *ep    	= NULL;
-	u_char  copy[BUFSIZ];
-	u_char *cp	= NULL;
+	char *a     	= NULL;
+	char *b     	= NULL;
+	char *ep    	= NULL;
+	char  copy[BUFSIZ];
+	char *cp	= NULL;
 	int 	inparen	= 0;
 #define OPENDMARC_MAX_QUOTES (256)
 	int	quotes[OPENDMARC_MAX_QUOTES + 1];
@@ -269,7 +269,7 @@ opendmarc_util_finddomain(u_char *raw, u_char *buf, size_t buflen)
 		if (numquotes > 0)
 			*cp = ' ';
 	}
-	ep = copy + strlen((char *)copy);
+	ep = copy + strlen(copy);
 	for (b = ep-1; b > copy; --b)
 	{
 		if (*b == '<')
@@ -291,7 +291,7 @@ opendmarc_util_finddomain(u_char *raw, u_char *buf, size_t buflen)
 	}
 	for (a = copy; a < ep; a++)
 	{
-		if (isspace((int)*a))
+		if (isspace((u_char)*a))
 			continue;
 		if (*a == '(')
 		{
@@ -309,7 +309,7 @@ opendmarc_util_finddomain(u_char *raw, u_char *buf, size_t buflen)
 	}
 	for (b = ep -1; b > a; --b)
 	{
-		if (isspace((int)*b))
+		if (isspace((u_char)*b))
 			continue;
 		if (*b == ')')
 		{
@@ -333,10 +333,10 @@ strip_local_part:
 	ep = strchr(cp, '@');
 	if (ep != NULL)
 		cp = ep + 1;
-	len = strlen((char *)cp);
+	len = strlen(cp);
 	if (len > buflen)
 		cp[buflen -1] = '\0';
-	len = strlen((char *)cp);
+	len = strlen(cp);
 	if (len > 0)
 	{
 		/*

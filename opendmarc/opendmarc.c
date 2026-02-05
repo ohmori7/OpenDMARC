@@ -135,9 +135,9 @@ struct dmarcf_msgctx
 	struct dmarcf_header *	mctx_hqtail;
 	struct dmarcf_dstring *	mctx_histbuf;
 	struct dmarcf_dstring *	mctx_afrf;
-	unsigned char		mctx_envfrom[BUFRSZ + 1];
-	unsigned char		mctx_envdomain[BUFRSZ + 1];
-	unsigned char		mctx_fromdomain[BUFRSZ + 1];
+	char			mctx_envfrom[BUFRSZ + 1];
+	char			mctx_envdomain[BUFRSZ + 1];
+	char			mctx_fromdomain[BUFRSZ + 1];
 };
 typedef struct dmarcf_msgctx * DMARCF_MSGCTX;
 
@@ -1592,7 +1592,7 @@ dmarcf_config_load(struct config *data, struct dmarcf_config *conf,
 	     cur != NULL;
 	     cur = cur->list_next)
 	{
-		u_char *domain;
+		char *domain;
 		ENTRY entry;
 		ENTRY *eptr;
 
@@ -2172,8 +2172,8 @@ mlfi_envfrom(SMFICTX *ctx, char **envfrom)
 	if (envfrom[0] != NULL)
 	{
 		size_t len;
-		unsigned char *p;
-		unsigned char *q;
+		char *p;
+		char *q;
 
 #if WITH_SPF
 		strncpy(cc->cctx_rawmfrom, envfrom[0],
@@ -2324,17 +2324,17 @@ mlfi_eom(SMFICTX *ctx)
 	struct dmarcf_header *hdr;
 	struct dmarcf_header *from;
 	struct arcseal_header *as_hdr;
-	u_char *reqhdrs_error = NULL;
-	u_char *user = NULL;
-	u_char **users;
-	u_char *domain = NULL;
-	u_char **domains;
-	u_char *bang;
-	u_char **ruv;
-	unsigned char header[MAXHEADER + 1];
-	unsigned char addrbuf[BUFRSZ + 1];
-	unsigned char replybuf[BUFRSZ + 1];
-	unsigned char pdomain[MAXHOSTNAMELEN + 1];
+	char *reqhdrs_error = NULL;
+	char *user = NULL;
+	char **users;
+	char *domain = NULL;
+	char **domains;
+	char *bang;
+	char **ruv;
+	char header[MAXHEADER + 1];
+	char addrbuf[BUFRSZ + 1];
+	char replybuf[BUFRSZ + 1];
+	char pdomain[MAXHOSTNAMELEN + 1];
 	struct authres ar;
 
 	assert(ctx != NULL);
@@ -2356,9 +2356,9 @@ mlfi_eom(SMFICTX *ctx)
 	**  later than expected (e.g. postfix).
 	*/
 
-	if (strcmp((char *) dfc->mctx_jobid, JOBIDUNKNOWN) == 0)
+	if (strcmp(dfc->mctx_jobid, JOBIDUNKNOWN) == 0)
 	{
-		dfc->mctx_jobid = (u_char *) dmarcf_getsymval(ctx, "i");
+		dfc->mctx_jobid = dmarcf_getsymval(ctx, "i");
 		if (dfc->mctx_jobid == NULL)
 		{
 			if (no_i_whine && conf->conf_dolog)
@@ -2367,7 +2367,7 @@ mlfi_eom(SMFICTX *ctx)
 				       "WARNING: symbol 'i' not available");
 				no_i_whine = FALSE;
 			}
-			dfc->mctx_jobid = (u_char *) JOBIDUNKNOWN;
+			dfc->mctx_jobid = JOBIDUNKNOWN;
 		}
 	}
 
@@ -2561,7 +2561,7 @@ mlfi_eom(SMFICTX *ctx)
 		(void) memset(aar_hdr_new, '\0', sizeof(struct arcares_header));
 
 		/* parse it */
-		if (opendmarc_arcares_parse(hdr->hdr_value, &aar_hdr_new->arcares) != 0)
+		if (opendmarc_arcares_parse((u_char *)hdr->hdr_value, &aar_hdr_new->arcares) != 0)
 		{
 			FREE(aar_hdr_new);
 			syslog(LOG_WARNING,
@@ -2609,7 +2609,7 @@ mlfi_eom(SMFICTX *ctx)
 		(void) memset(as_hdr_new, '\0', sizeof(struct arcseal_header));
 
 		/* parse it */
-		if (opendmarc_arcseal_parse(hdr->hdr_value, &as_hdr_new->arcseal) != 0)
+		if (opendmarc_arcseal_parse((u_char *)hdr->hdr_value, &as_hdr_new->arcseal) != 0)
 		{
 			FREE(as_hdr_new);
 			continue;
@@ -2642,16 +2642,16 @@ mlfi_eom(SMFICTX *ctx)
 
 		/* parse it */
 		memset(&ar, '\0', sizeof ar);
-		if (ares_parse(hdr->hdr_value, &ar) != 0)
+		if (ares_parse((u_char *)hdr->hdr_value, &ar) != 0)
 			continue;
 
 		/* skip it if it's not one of ours */
-		if (strcasecmp(ar.ares_host, authservid) != 0 &&
+		if (strcasecmp((char *)ar.ares_host, authservid) != 0 &&
 		    (conf->conf_trustedauthservids == NULL ||
-		     !dmarcf_match(ar.ares_host, conf->conf_trustedauthservids,
+		     !dmarcf_match((char *)ar.ares_host, conf->conf_trustedauthservids,
 		                   FALSE)))
 		{
-			unsigned char *slash;
+			char *slash;
 
 			if (!conf->conf_authservidwithjobid)
 			{
@@ -2666,7 +2666,7 @@ mlfi_eom(SMFICTX *ctx)
 				continue;
 			}
 
-			slash = (unsigned char *) strchr(ar.ares_host, '/');
+			slash = strchr((char *)ar.ares_host, '/');
 			if (slash == NULL)
 			{
 				if (conf->conf_dolog)
@@ -2681,9 +2681,9 @@ mlfi_eom(SMFICTX *ctx)
 			}
 
 			*slash = '\0';
-			if ((strcasecmp(ar.ares_host, authservid) != 0 &&
+			if ((strcasecmp((char *)ar.ares_host, authservid) != 0 &&
 			     (conf->conf_trustedauthservids == NULL ||
-			      !dmarcf_match(ar.ares_host,
+			      !dmarcf_match((char *)ar.ares_host,
 			                    conf->conf_trustedauthservids,
 			                    FALSE))) ||
 			    strcmp(slash + 1, dfc->mctx_jobid) != 0)
@@ -2732,15 +2732,15 @@ mlfi_eom(SMFICTX *ctx)
 				     i++)
 				{
 					if (ar.ares_result[c].result_ptype[i] == ARES_PTYPE_SMTP &&
-					    strcasecmp(ar.ares_result[c].result_property[i],
+					    strcasecmp((char *)ar.ares_result[c].result_property[i],
 					               "mailfrom") == 0)
 					{
 						char *d;
 
-						d = strchr(ar.ares_result[c].result_value[i],
+						d = strchr((char *)ar.ares_result[c].result_value[i],
 						           '@');
 						if (d == NULL)
-							d = ar.ares_result[c].result_value[i];
+							d = (char *)ar.ares_result[c].result_value[i];
 
 						if (strcasecmp(d,
 						               dfc->mctx_envdomain) == 0)
@@ -2765,10 +2765,10 @@ mlfi_eom(SMFICTX *ctx)
 				{
 					if (ar.ares_result[c].result_ptype[pc] == ARES_PTYPE_SMTP)
 					{
-						if (strcasecmp(ar.ares_result[c].result_property[pc],
+						if (strcasecmp((char *)ar.ares_result[c].result_property[pc],
 					                       "mailfrom") == 0)
 						{
-							spfaddr = ar.ares_result[c].result_value[pc];
+							spfaddr = (char *)ar.ares_result[c].result_value[pc];
 							if (strchr(spfaddr, '@') != NULL)
 							{
 								strncpy(addrbuf,
@@ -2785,11 +2785,11 @@ mlfi_eom(SMFICTX *ctx)
 
 							spfmode = DMARC_POLICY_SPF_ORIGIN_MAILFROM;
 						}
-						else if (strcasecmp(ar.ares_result[c].result_property[pc],
+						else if (strcasecmp((char *)ar.ares_result[c].result_property[pc],
 					                           "helo") == 0 &&
 						         addrbuf[0] == '\0')
 						{
-							spfaddr = ar.ares_result[c].result_value[pc];
+							spfaddr = (char *)ar.ares_result[c].result_value[pc];
 							snprintf(addrbuf,
 							         sizeof addrbuf,
 							         "UNKNOWN@%s",
@@ -2852,8 +2852,8 @@ mlfi_eom(SMFICTX *ctx)
 			}
 			else if (ar.ares_result[c].result_method == ARES_METHOD_DKIM)
 			{
-				u_char *dkim_selector = NULL;
-				u_char *dkim_domain = NULL;
+				char *dkim_selector = NULL;
+				char *dkim_domain = NULL;
 
 				for (pc = 0;
 				     pc < ar.ares_result[c].result_props;
@@ -2878,7 +2878,7 @@ mlfi_eom(SMFICTX *ctx)
 				dmarcf_dstring_printf(dfc->mctx_histbuf,
 				                      "dkim %s %s %d\n",
 				                      dkim_domain,
-				                      (dkim_selector != NULL) ? dkim_selector : (u_char *)"-",
+				                      (dkim_selector != NULL) ? dkim_selector : "-",
 				                      ar.ares_result[c].result_result);
 
 				if (ar.ares_result[c].result_result != ARES_RESULT_PASS)
@@ -2931,8 +2931,8 @@ mlfi_eom(SMFICTX *ctx)
 				if (dfc->mctx_arcpass == ARES_RESULT_PASS &&
 				    conf->conf_domainwhitelisthashcount > 0)
 				{
-					u_char *arcchain = NULL;
-					u_char *arcdomain;
+					char *arcchain = NULL;
+					char *arcdomain;
 					int arcchainlen = 0;
 					int arcchainitempass = 0;
 					ENTRY entry;
@@ -2943,7 +2943,7 @@ mlfi_eom(SMFICTX *ctx)
 					     pc++)
 					{
 						if (ar.ares_result[c].result_ptype[pc] == ARES_PTYPE_ARCCHAIN)
-							arcchain = ar.ares_result[c].result_value[pc];
+							arcchain = (char *)ar.ares_result[c].result_value[pc];
 					}
 
 					if (arcchain != NULL)
@@ -2954,7 +2954,7 @@ mlfi_eom(SMFICTX *ctx)
 						     dfc->mctx_arcchain[pc] != NULL;
 						     pc++)
 						{
-							arcdomain = (u_char *)strdup(dfc->mctx_arcchain[pc]);
+							arcdomain = strdup(dfc->mctx_arcchain[pc]);
 							/* XXX: avoid assertion failure for now... */
 							if (arcdomain == NULL)
 								continue;
@@ -3226,7 +3226,7 @@ mlfi_eom(SMFICTX *ctx)
 		policy = DMARC_POLICY_ABSENT;
 	dmarcf_dstring_printf(dfc->mctx_histbuf, "policy %d\n", policy);
 
-	ruv = opendmarc_policy_fetch_rua(cc->cctx_dmarc, NULL, 0, TRUE);
+	ruv = (char **)opendmarc_policy_fetch_rua(cc->cctx_dmarc, NULL, 0, TRUE);
 	if (ruv != NULL)
 	{
 		for (c = 0; ruv[c] != NULL; c++)
@@ -3284,7 +3284,7 @@ mlfi_eom(SMFICTX *ctx)
 	**  Generate a failure report.
 	*/
 
-	ruv = opendmarc_policy_fetch_ruf(cc->cctx_dmarc, NULL, 0, TRUE);
+	ruv = (char **)opendmarc_policy_fetch_ruf(cc->cctx_dmarc, NULL, 0, TRUE);
 	if ((policy == DMARC_POLICY_REJECT ||
 	     policy == DMARC_POLICY_QUARANTINE ||
 	     (conf->conf_afrfnone && policy == DMARC_POLICY_NONE)) &&
@@ -5199,7 +5199,7 @@ main(int argc, char **argv)
 	if (curconf->conf_pslist != NULL)
 	{
 		libopendmarc.tld_type = OPENDMARC_TLD_TYPE_MOZILLA;
-		strncpy(libopendmarc.tld_source_file, curconf->conf_pslist,
+		strncpy((char *)libopendmarc.tld_source_file, curconf->conf_pslist,
 		        sizeof libopendmarc.tld_source_file - 1);
 	}
 

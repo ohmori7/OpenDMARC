@@ -148,9 +148,9 @@ int
 opendmarc_arcares_parse (u_char *hdr, struct arcares *aar)
 {
 	int result = 0;
-	u_char *tmp_ptr;
-	u_char *token;
-	u_char tmp[OPENDMARC_ARCARES_MAXHEADER_LEN + 1];
+	char *tmp_ptr;
+	char *token;
+	char tmp[OPENDMARC_ARCARES_MAXHEADER_LEN + 1];
 
 	assert(hdr != NULL);
 	assert(aar != NULL);
@@ -161,9 +161,9 @@ opendmarc_arcares_parse (u_char *hdr, struct arcares *aar)
 	memset(tmp, '\0', sizeof tmp);
 
 	// guarantee a null-terminated string
-	memcpy(tmp, hdr, MIN(strlen(hdr), sizeof tmp - 1));
+	memcpy(tmp, hdr, MIN(strlen((char *)hdr), sizeof tmp - 1));
 
-	while ((token = strsep((char **)&tmp_ptr, ";")) != NULL)
+	while ((token = strsep(&tmp_ptr, ";")) != NULL)
 	{
 		size_t leading_space_len;
 		aar_tag_t tag_code;
@@ -233,11 +233,11 @@ opendmarc_arcares_parse (u_char *hdr, struct arcares *aar)
 **/
 
 int
-opendmarc_arcares_arc_parse (u_char *hdr_arc, struct arcares_arc_field *arc)
+opendmarc_arcares_arc_parse (char *hdr_arc, struct arcares_arc_field *arc)
 {
-	u_char *tmp_ptr;
-	u_char *token;
-	u_char tmp[OPENDMARC_ARCARES_MAXHEADER_LEN + 1];
+	char *tmp_ptr;
+	char *token;
+	char tmp[OPENDMARC_ARCARES_MAXHEADER_LEN + 1];
 	int result = 0;
 
 	tmp_ptr = tmp;
@@ -248,7 +248,7 @@ opendmarc_arcares_arc_parse (u_char *hdr_arc, struct arcares_arc_field *arc)
 	memset(arc, '\0', sizeof *arc);
 	memset(tmp, '\0', sizeof tmp);
 
-	memcpy(tmp, hdr_arc, MIN_OF(strlen(hdr_arc), sizeof tmp - 1));
+	memcpy(tmp, hdr_arc, MIN_OF(strlen((char *)hdr_arc), sizeof tmp - 1));
 
 	while ((token = strsep((char **)&tmp_ptr, ";")) != NULL)
 	{

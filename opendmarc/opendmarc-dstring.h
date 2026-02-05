@@ -19,7 +19,7 @@ struct dmarcf_dstring;
 extern struct dmarcf_dstring *dmarcf_dstring_new __P((int, int));
 extern void dmarcf_dstring_free __P((struct dmarcf_dstring *));
 extern _Bool dmarcf_dstring_copy __P((struct dmarcf_dstring *, u_char *));
-extern _Bool dmarcf_dstring_cat __P((struct dmarcf_dstring *, u_char *));
+extern _Bool dmarcf_dstring_cat __P((struct dmarcf_dstring *, const char *));
 extern _Bool dmarcf_dstring_cat1 __P((struct dmarcf_dstring *, int));
 extern _Bool dmarcf_dstring_catn __P((struct dmarcf_dstring *, u_char *, size_t));
 extern void dmarcf_dstring_chop __P((struct dmarcf_dstring *, int));
