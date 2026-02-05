@@ -104,15 +104,12 @@ opendmarc_arcares_convert(struct opendmarc_arcares_lookup *table, char *str)
 **/
 
 static char *
-opendmarc_arcares_strip_whitespace(u_char *string)
+opendmarc_arcares_strip_whitespace(char *string)
 {
 	assert(string != NULL);
 
 	int a;
 	int b;
-	char *string_ptr;
-
-	string_ptr = string;
 
 	for (a = 0, b = 0;
 	     string[b] != '\0' && b < OPENDMARC_ARCARES_MAX_TOKEN_LEN;
