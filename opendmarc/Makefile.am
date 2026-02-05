@@ -6,7 +6,7 @@ if FILTER_TESTS
 SUBDIRS=tests
 endif
 
-AM_CFLAGS = @CFLAGS@ -Wall -Wno-unused-but-set-variable -Werror
+AM_CFLAGS = -Wall -Werror
 
 dist_doc_DATA = opendmarc.conf.sample
 
