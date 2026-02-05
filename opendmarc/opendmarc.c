@@ -1163,7 +1163,6 @@ dmarcf_checkip(_SOCK_ADDR *ip, struct list *list)
 
 	if (ip->sa_family == AF_INET)
 	{
-		_Bool exists;
 		int c;
 		int bits;
 		struct in_addr addr;
@@ -1174,8 +1173,6 @@ dmarcf_checkip(_SOCK_ADDR *ip, struct list *list)
 		memcpy(&addr.s_addr, &sin.sin_addr, sizeof addr.s_addr);
 
 		/* try the IP address directly */
-		exists = FALSE;
-
 		ipbuf[0] = '!';
 		(void) dmarcf_inet_ntoa(addr, &ipbuf[1], sizeof ipbuf - 1);
 
