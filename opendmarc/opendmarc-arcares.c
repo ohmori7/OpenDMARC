@@ -177,6 +177,8 @@ opendmarc_arcares_parse (u_char *hdr, struct arcares *aar)
 		        return 0;
 		tag_label = strsep(&token_ptr, "=");
 		tag_value = token_ptr;
+		if (tag_value == NULL)
+			return -1;
 		tag_code = opendmarc_arcares_convert(aar_tags, tag_label);
 
 		switch (tag_code)
@@ -200,6 +202,8 @@ opendmarc_arcares_parse (u_char *hdr, struct arcares *aar)
 			{
 				leading_space_len = strspn(token, " \n\t");
 				tag_value = opendmarc_arcares_strip_whitespace(token);
+				if (tag_value == NULL)
+					return -1;	/* XXX */
 				strlcpy(aar->authserv_id, tag_value, sizeof aar->authserv_id);
 			}
 			break;
@@ -266,6 +270,8 @@ opendmarc_arcares_arc_parse (char *hdr_arc, struct arcares_arc_field *arc)
 		if (token_ptr == NULL)
 			return -1;
 		tag_value = opendmarc_arcares_strip_whitespace(token_ptr);
+		if (tag_value == NULL)
+			return -1;
 		tag_code = opendmarc_arcares_convert(aar_arc_tags, tag_label);
 
 		switch (tag_code)
