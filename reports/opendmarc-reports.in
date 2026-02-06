@@ -14,19 +14,17 @@ use warnings;
 
 use Switch;
 
-use DBI;
+use DBI qw(:sql_types);
 use File::Basename;
 use File::Temp;
 use Net::Domain qw(hostfqdn hostdomain);
 use Getopt::Long;
 use IO::Handle;
-use IO::Compress::Zip qw(zip);
+use IO::Compress::Gzip qw(gzip);
 use POSIX;
 use MIME::Base64;
 use Net::SMTP;
 use Time::Local;
-
-require DBD::@SQL_BACKEND@;
 
 require HTTP::Request;
 
@@ -50,7 +48,7 @@ my $boundary;
 my $tmpout;
 
 my $repfile;
-my $zipfile;
+my $gzipfile;
 
 my $zipin;
 
@@ -122,6 +120,7 @@ my $dbi_a;
 my $dbi_hash;
 
 # DB parameters
+my $def_dbscheme  = "@SQL_BACKEND@";
 my $def_dbhost    = "localhost";
 my $def_dbname    = "opendmarc";
 my $def_dbuser    = "opendmarc";
@@ -134,7 +133,7 @@ my $dbuser;
 my $dbpasswd;
 my $dbport;
 
-my $dbscheme     = "@SQL_BACKEND@";
+my $dbscheme     = $def_dbscheme;
 
 my $repdom       = hostdomain();
 my $repemail     = "postmaster@" . $repdom;
@@ -153,6 +152,7 @@ sub usage
 {
 	print STDERR "$progname: usage: $progname [options]\n";
 	print STDERR "\t--day              send yesterday's data\n";
+	print STDERR "\t--dbscheme=scheme  mysql or MariaDB [$def_dbscheme]\n";
 	print STDERR "\t--dbhost=host      database host [$def_dbhost]\n";
 	print STDERR "\t--dbname=name      database name [$def_dbname]\n";
 	print STDERR "\t--dbpasswd=passwd  database password [$def_dbpasswd]\n";
@@ -182,6 +182,7 @@ setlocale(LC_ALL, 'C');
 
 # parse command line arguments
 my $opt_retval = &Getopt::Long::GetOptions ('day!' => \$daybound,
+                                            'dbscheme=s' => \$dbscheme,
                                             'dbhost=s' => \$dbhost,
                                             'dbname=s' => \$dbname,
                                             'dbpasswd=s' => \$dbpasswd,
@@ -303,8 +304,13 @@ if ($verbose)
 	print STDERR "$progname: started at " . localtime($now) . "\n";
 }
 
+require "DBD/$dbscheme.pm";
+
 my $dbi_dsn = "DBI:" . $dbscheme . ":database=" . $dbname .
-              ";host=" . $dbhost . ";port=" . $dbport;
+              ";host=" . $dbhost;
+if ($dbport != $def_dbport) {
+    $dbi_dsn .= ";port=" . $dbport;
+}
 
 $dbi_h = DBI->connect($dbi_dsn, $dbuser, $dbpasswd, { PrintError => 0 });
 if (!defined($dbi_h))
@@ -448,7 +454,8 @@ foreach (@$domainset)
 	}
 
 	$dbi_s = $dbi_h->prepare("SELECT repuri, adkim, aspf, policy, spolicy, pct, UNIX_TIMESTAMP(lastsent) FROM requests WHERE domain = ?");
-	if (!$dbi_s->execute($domainid))
+        $dbi_s->bind_param(1, $domainid, {TYPE => SQL_INTEGER});
+	if (!$dbi_s->execute())
 	{
 		print STDERR "$progname: can't get reporting URI for domain $domain: " . $dbi_h->errstr . "\n";
 		$dbi_s->finish;
@@ -517,7 +524,7 @@ foreach (@$domainset)
 
 	# construct the temporary file
 	$repfile = $repdom . "!" . $domain . "!" . $repstart . "!" . $repend . ".xml";
-	$zipfile = $repdom . "!" . $domain . "!" . $repstart . "!" . $repend . ".zip";
+	$gzipfile = $repdom . "!" . $domain . "!" . $repstart . "!" . $repend . ".xml.gz";
 	if (!open($tmpout, ">", $repfile))
 	{
 		print STDERR "$progname: can't create report file for domain $domain\n";
@@ -609,7 +616,10 @@ foreach (@$domainset)
 		});
 	}
 
-	if (!$dbi_s->execute($domainid, $repstart, $repend))
+        $dbi_s->bind_param(1, $domainid, {TYPE => SQL_INTEGER});
+        $dbi_s->bind_param(2, $repstart, {TYPE => SQL_INTEGER});
+        $dbi_s->bind_param(3, $repend, {TYPE => SQL_INTEGER});
+	if (!$dbi_s->execute())
 	{
 		print STDERR "$progname: can't extract report for domain $domain: " . $dbi_h->errstr . "\n";
 		$dbi_s->finish;
@@ -735,7 +745,8 @@ foreach (@$domainset)
 		                          WHERE arcseals.message = ?
 		                          ORDER BY arcseals.instance DESC
 		});
-		if (!$dbi_s2->execute($msgid))
+                $dbi_s2->bind_param(1, $msgid, {TYPE => SQL_INTEGER});
+		if (!$dbi_s2->execute())
 		{
 			print STDERR "$progname: can't extract report for message $msgid: " . $dbi_h->errstr . "\n";
 			$dbi_s2->finish;
@@ -787,7 +798,8 @@ foreach (@$domainset)
 		                          JOIN selectors ON signatures.selector = selectors.id
 		                          WHERE signatures.message = ?
 		});
-		if (!$dbi_s2->execute($msgid))
+                $dbi_s2->bind_param(1, $msgid, {TYPE => SQL_INTEGER});
+		if (!$dbi_s2->execute())
 		{
 			print STDERR "$progname: can't extract report for message $msgid: " . $dbi_h->errstr . "\n";
 			$dbi_s2->finish;
@@ -870,10 +882,10 @@ foreach (@$domainset)
 		next;
 	}
 
-	# zip the report
-	if (!zip [ $repfile ] => $zipfile)
+	# gzip the report
+	if (!gzip [ $repfile ] => $gzipfile)
 	{
-		print STDERR "$progname: can't zip report for domain $domain: $!\n";
+		print STDERR "$progname: can't gzip report for domain $domain: $!\n";
 		next;
 	}
 
@@ -947,9 +959,9 @@ foreach (@$domainset)
 			my $datestr;
 			my $report_id;
 
-			if (!open($zipin, $zipfile))
+			if (!open($zipin, $gzipfile))
 			{
-				print STDERR "$progname: can't read zipped report for $domain: $!\n";
+				print STDERR "$progname: can't read gzipped report for $domain: $!\n";
 				next;
 			}
 
@@ -978,8 +990,8 @@ foreach (@$domainset)
 			$mailout .= "generated at " . localtime() . "\n";
 			$mailout .= "\n";
 			$mailout .= "--$boundary\n";
-			$mailout .= "Content-Type: application/zip\n";
-			$mailout .= "Content-Disposition: attachment; filename=\"$zipfile\"\n";
+			$mailout .= "Content-Type: application/gzip\n";
+			$mailout .= "Content-Disposition: attachment; filename=\"$gzipfile\"\n";
 			$mailout .= "Content-Transfer-Encoding: base64\n";
 			$mailout .= "\n";
 
@@ -1035,7 +1047,9 @@ foreach (@$domainset)
 	if ($doupdate)
 	{
 		$dbi_s = $dbi_h->prepare("UPDATE requests SET lastsent = FROM_UNIXTIME(?) WHERE domain = ?");
-		if (!$dbi_s->execute($repend, $domainid))
+                $dbi_s->bind_param(1, $repend, {TYPE => SQL_INTEGER});
+                $dbi_s->bind_param(2, $domainid, {TYPE => SQL_INTEGER});
+		if (!$dbi_s->execute())
 		{
 			print STDERR "$progname: can't update last sent time for domain $domain: " . $dbi_h->errstr . "\n";
 			$dbi_s->finish;
@@ -1044,7 +1058,7 @@ foreach (@$domainset)
 		}
 	}
 
-	unlink($zipfile);
+	unlink($gzipfile);
 	if (!$keepfiles)
 	{
 		unlink($repfile);

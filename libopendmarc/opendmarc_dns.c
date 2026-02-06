@@ -202,7 +202,8 @@ dmarc_dns_get_record(char *domain, int *reply, char *got_txtbuf, size_t got_txtl
 	while (*bp == '.')
 		++bp;
 
-#ifdef HAVE_RES_NINIT   
+#ifdef HAVE_RES_NINIT
+    memset(&resp, '\0', sizeof resp);
 	res_ninit(&resp);
 #ifdef RES_USE_DNSSEC
 	resp.options |= RES_USE_DNSSEC;

@@ -14,6 +14,9 @@ reporting feature.
 .I --alltables
 Expire records in all tables rather than only the large ones.
 .TP
+.I --dbscheme=scheme
+Specify "msyql" (the default) or "MariaDB".
+.TP
 .I --dbhost=host
 Attempts to connect to the database server on the named
 .I host.

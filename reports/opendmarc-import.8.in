@@ -14,6 +14,9 @@ and inserts it into an SQL database, for later use by
 to generate aggregate reports.
 .SH OPTIONS
 .TP
+.I --dbscheme=scheme
+Specify "msyql" (the default) or "MariaDB".
+.TP
 .I --dbhost=hostname
 Specifies the hostname on which the SQL server is running.  Defaults to
 the value of the environment variable OPENDMARC_DBHOST, or "localhost" if
