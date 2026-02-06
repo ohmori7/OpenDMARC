@@ -3,6 +3,10 @@
 This listing shows the versions of the OpenDMARC package, the date of
 release, and a summary of the changes in that release.
 
+1.4.2a?
+	Fix issue #182: fix the memory leak in opendmarc.c.
+	Fix issue #241: fix the memory leaks when parsing ARC headers.
+
 1.4.2		2021/12/19
 	Fix issue #175: Don't reject a multi-valued From when all of the
 		domains match.
