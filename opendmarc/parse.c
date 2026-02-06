@@ -454,6 +454,11 @@ dmarcf_mail_parse(char *line, char **user_out,
 					*domain_out = w;
 					ws = 0;
 				}
+				else if (type == '>')
+				{
+					err = MAILPARSE_ERR_SUNBALANCED;
+					return err;
+				}
 				else
 				{
 
